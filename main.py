@@ -73,12 +73,12 @@ def restart_game():
 def quit_game():
     application.quit()
 
-pause_menu = Entity(enabled=False, parent=camera.ui)
-Button(text='Resume', scale=(0.2, 0.05), position=(0, 0.15), parent=pause_menu, on_click=pause_game)
-Button(text='Restart', scale=(0.2, 0.05), position=(0, 0.05), parent=pause_menu, on_click=restart_game)
-Button(text='Toggle Music', scale=(0.2, 0.05), position=(0, -0.05), parent=pause_menu, on_click=toggle_music)
-Button(text='Quit', scale=(0.2, 0.05), position=(0, -0.15), parent=pause_menu, on_click=quit_game)
-Button(text='Weathers (Coming Soon)', scale=(0.25, 0.05), position=(0, -0.25), parent=pause_menu, on_click=lambda: print("Coming Soon"))
+pause_menu = Entity(enabled=False, parent=camera.ui, origin=(1, 1), position=(0.5, 0.5))
+Button(text='Resume', scale=(0.2, 0.05), position=(-0.1, -0.1), parent=pause_menu, on_click=pause_game)
+Button(text='Restart', scale=(0.2, 0.05), position=(-0.1, -0.15), parent=pause_menu, on_click=restart_game)
+Button(text='Toggle Music', scale=(0.2, 0.05), position=(-0.1, -0.2), parent=pause_menu, on_click=toggle_music)
+Button(text='Quit', scale=(0.2, 0.05), position=(-0.1, -0.25), parent=pause_menu, on_click=quit_game)
+Button(text='Weathers (Coming Soon)', scale=(0.25, 0.05), position=(-0.1, -0.3), parent=pause_menu, on_click=lambda: print("Coming Soon"))
 
 # Game Over Screen
 
