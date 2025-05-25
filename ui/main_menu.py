@@ -18,3 +18,10 @@ class MainMenu(Entity):
         # Row 2
         self.choose_plane_button = Button(text='Choose Plane', parent=self.panel, scale=button_scale, position=(-button_scale[0]/2 - button_spacing/2, -button_scale[1]/2 - button_spacing/2))
         self.start_button = Button(text='Start', parent=self.panel, scale=button_scale, position=(button_scale[0]/2 + button_spacing/2, -button_scale[1]/2 - button_spacing/2))
+
+    def find_button_by_text(self, text):
+        for button in [self.weather_button, self.info_button, self.choose_plane_button, self.start_button]:
+            # Compare the button's text, stripping potential newline characters for Weather button
+            if button.text.replace('\\n', '\n') == text.replace('\\n', '\n'):
+                return button
+        return None
