@@ -10,7 +10,7 @@ class PlaneSelector(Entity):
         self.title = Text(text='Select Your Plane', parent=self.panel, y=0.25, scale=2, origin=(0, 0), color=color.white)
 
         self.buttons = []
-        plane_dir = 'models/planes/'
+        plane_dir = 'assets/models/planes/'
         plane_names = [f[:-4].replace('_', ' ').title() for f in os.listdir(plane_dir) if f.endswith('.obj')]
 
         button_spacing = 0.3

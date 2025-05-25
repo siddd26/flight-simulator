@@ -4,7 +4,18 @@ from ursina import *
 class HUD(Entity):
     def __init__(self):
         super().__init__()
-        self.score_text = Text(text='Score: 0', position=(-0.85, 0.45), scale=1.5, color=color.white)
+        # Coin icon
+        self.coin_icon = Entity(
+            parent=camera.ui,
+            model='assets/models/items/coin.obj',  # Assuming this is the path to your coin model
+            color=color.gold,
+            scale=0.05,
+            position=(-0.88, 0.45) # Position the icon slightly to the left of the text
+        )
+        self.score_text = Text(text='0', position=(-0.85, 0.45), scale=1.5, color=color.white)
 
     def update_score(self, score):
-        self.score_text.text = f'Score: {score}'
+        self.score_text.text = str(score)
+        # Add a brief scale animation to the score text
+        self.score_text.animate_scale(2, duration=0.1, curve=curve.out_quad)
+        self.score_text.animate_scale(1.5, duration=0.1, delay=0.1, curve=curve.in_quad)

@@ -149,6 +149,7 @@ def update():
             entities.remove(entity)
 
         elif isinstance(entity, Building) and player_plane.intersects(entity).hit:
+            camera.shake(duration=.5, magnitude=.5)
             invoke(show_game_over, delay=0.2)
             application.pause()
             return
