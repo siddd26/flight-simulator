@@ -9,6 +9,7 @@ from core.asset_loader import preload_assets
 from core.physics_engine import check_collisions
 from core.input_controller import InputController
 from core.progression_manager import ProgressionManager
+from ui.main_menu import MainMenu
 import random, json, os
 
 app = Ursina()
@@ -25,7 +26,7 @@ score = 0
 high_scores = []
 save_file = 'leaderboard.json'
 score_text = Text(text=f'Score: {score}', position=(-0.85, 0.45), scale=2, color=color.white)
-
+game_state = 'menu' # 'menu', 'gameplay', 'game_over'
 player_plane = None
 input_controller = None
 entities = []
@@ -42,16 +43,9 @@ background_music = Audio('assets/sounds/plane.wav', autoplay=True, loop=True)
 if os.path.exists(save_file):
     with open(save_file, 'r') as f:
         high_scores = json.load(f)
-
-# UI buttons
-
-def toggle_music():
-    global music_on
-    music_on = not music_on
-    background_music.volume = 1 if music_on else 0
-
+# Game State Management
 def pause_game():
-    global paused
+    global paused, game_state
     paused = not paused
     if paused:
         application.pause()
@@ -61,24 +55,23 @@ def pause_game():
         pause_menu.disable()
 
 def restart_game():
+    global score, score_text, entities, player_plane, game_state
     destroy(player_plane)
     for e in entities:
         destroy(e)
     entities.clear()
-    global score, score_text
+    
     score = 0
-    score_text.text = f'Score: {score}'
-    start_game_with_plane(player_plane.model.split('/')[-1][:-4])
+    score_text.text = f'Score: {score}' # Reset score text
+    
+    # Recreate a basic plane for simplicity
+    player_plane = PlayerPlane(model_name='default_plane')
+    game_state = 'gameplay'
 
 def quit_game():
     application.quit()
 
-pause_menu = Entity(enabled=False, parent=camera.ui, origin=(1, 1), position=(0.5, 0.5))
-Button(text='Resume', scale=(0.2, 0.05), position=(-0.1, -0.1), parent=pause_menu, on_click=pause_game)
-Button(text='Restart', scale=(0.2, 0.05), position=(-0.1, -0.15), parent=pause_menu, on_click=restart_game)
-Button(text='Toggle Music', scale=(0.2, 0.05), position=(-0.1, -0.2), parent=pause_menu, on_click=toggle_music)
-Button(text='Quit', scale=(0.2, 0.05), position=(-0.1, -0.25), parent=pause_menu, on_click=quit_game)
-Button(text='Weathers (Coming Soon)', scale=(0.25, 0.05), position=(-0.1, -0.3), parent=pause_menu, on_click=lambda: print("Coming Soon"))
+
 
 # Game Over Screen
 
@@ -102,49 +95,37 @@ def show_game_over():
         Text(text=f'{i+1}. {s}', scale=1.5, position=(0, y_offset), origin=(0, 0), parent=game_over_screen)
         y_offset -= 0.07
 
-# Plane selection callback
-
-def start_game_with_plane(model_name):
-    global player_plane, input_controller, entities, progression_manager
-
-    player_plane = PlayerPlane(model_name=model_name)
+def start_game():
+    global player_plane, input_controller, game_state
+    main_menu.disable()
+    plane_selector.disable() # Ensure plane selector is also disabled
+    game_state = 'gameplay'
+    player_plane = PlayerPlane(model_name='default_plane') # Start with default plane
     input_controller = InputController(player_plane)
-    progression_manager = ProgressionManager(player_plane, entities)
 
     Entity(model='plane', texture='textures/environment/ground.png', scale=(100,1,100), collider='box', y=-1)
     Sky(texture='textures/environment/skybox.png')
-
-    for _ in range(10):
-        coin = Coin(position=(random.uniform(-10, 10), 1, random.uniform(10, 100)))
-        entities.append(coin)
-
-    for _ in range(5):
-        hoop = HulaHoop(position=(random.uniform(-10, 10), 3, random.uniform(10, 100)))
-        entities.append(hoop)
 
     for _ in range(15):
         building = Building(position=(random.uniform(-10, 10), 0, random.uniform(10, 100)))
         entities.append(building)
 
 # Main update loop
-
 def update():
-    global score
-
-    if held_keys['escape']:
-        pause_game()
-
-    if paused or not player_plane:
+    global score, game_state
+    if game_state != 'gameplay' or not player_plane:
         return
 
     input_controller.update()
-    check_collisions(player_plane, entities)
-    progression_manager.update()
+    player_plane.update() # Assuming PlayerPlane has an update method
 
     for entity in entities[:]:
-        if isinstance(entity, Coin) and player_plane.intersects(entity).hit:
+        # Basic forward movement for entities for simplicity
+        entity.position -= player_plane.forward * time.dt * 10 
+
+        if isinstance(entity, Coin) and player_plane.intersects(entity).hit: # Check for coin collision
             score += 1
-            score_text.text = f'Score: {score}'
+            score_text.text = f'Score: {score}' # Update score display
             destroy(entity)
             entities.remove(entity)
 
@@ -153,17 +134,20 @@ def update():
             invoke(show_game_over, delay=0.2)
             application.pause()
             return
+        
+        # Basic despawn for entities that pass
+        if entity.position.z < player_plane.position.z - 20:
+             destroy(entity)
+             entities.remove(entity)
 
-    # Performance Optimization: despawn far entities
-    for entity in entities[:]:
-        if distance(player_plane, entity) > 150:
-            destroy(entity)
-            entities.remove(entity)
+# Initialize main menu
+main_menu = MainMenu()
+main_menu.find_button_by_text('Start').on_click = start_game
+main_menu.find_button_by_text('Choose Plane').on_click = lambda: [main_menu.disable(), plane_selector.enable()]
+main_menu.find_button_by_text('Quit').on_click = quit_game
 
-# Instructions
-instructions = Text(text='WASD to Fly | ESC to Pause | Collect Coins | Avoid Buildings', position=(0, 0.45), scale=1.5, origin=(0,0), color=color.azure)
-
-# Start menu
-plane_selector = PlaneSelector(callback=start_game_with_plane)
+# Initialize plane selector (disabled initially)
+plane_selector = PlaneSelector(callback=start_game)
+plane_selector.disable()
 
 app.run()

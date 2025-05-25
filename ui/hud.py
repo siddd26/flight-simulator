@@ -16,6 +16,3 @@ class HUD(Entity):
 
     def update_score(self, score):
         self.score_text.text = str(score)
-        # Add a brief scale animation to the score text
-        self.score_text.animate_scale(2, duration=0.1, curve=curve.out_quad)
-        self.score_text.animate_scale(1.5, duration=0.1, delay=0.1, curve=curve.in_quad)
